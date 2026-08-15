@@ -1,202 +1,581 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Building the AI-first Developer Stack</title>
-    <meta
-      name="description"
-      content="Slides for Building the AI-first Developer Stack."
-    >
-    <meta property="og:title" content="Building the AI-first Developer Stack">
-    <meta
-      property="og:description"
-      content="View or download the Building the AI-first Developer Stack PDF."
-    >
-    <meta property="og:type" content="website">
-    <style>
-      :root {
-        color-scheme: light;
-        --bg: #f6f5f0;
-        --panel: #ffffff;
-        --text: #191919;
-        --muted: #5d625f;
-        --line: #d9d7cf;
-        --accent: #007c89;
-        --accent-strong: #04515b;
-        --shadow: 0 18px 45px rgba(25, 25, 25, 0.12);
-      }
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Building the AI-first Developer Stack</title>
+<meta name="description" content="Slide deck: Building the AI-first Developer Stack — Avindra Fernando">
+<meta property="og:title" content="Building the AI-first Developer Stack">
+<meta property="og:type" content="website">
+<meta property="og:image" content="slides/1_Building-the-AI-first-Developer-Stack.png">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧰</text></svg>">
+<style>
+  :root {
+    --bg: #0b0d10;
+    --fg: #e8eaed;
+    --muted: #8b929c;
+    --accent: #2ea043;
+    --panel: rgba(20, 23, 28, 0.92);
+    --border: rgba(255, 255, 255, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg); color: var(--fg);
+    font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overscroll-behavior: none;
+  }
+  body { display: flex; flex-direction: column; overflow: hidden; }
+  body.hide-ui .chrome { opacity: 0; pointer-events: none; }
+  body.hide-ui { cursor: none; }
+  .chrome { transition: opacity .25s ease; }
 
-      * {
-        box-sizing: border-box;
-      }
+  /* ---------- progress ---------- */
+  #progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: var(--accent); z-index: 40; transition: width .18s ease;
+  }
 
-      html,
-      body {
-        height: 100%;
-      }
+  /* ---------- stage ---------- */
+  #stage {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none; -webkit-user-select: none;
+  }
+  #slide {
+    max-width: 100%; max-height: 100%;
+    width: auto; height: auto;
+    object-fit: contain; display: block;
+    -webkit-user-drag: none;
+  }
+  .zone {
+    position: absolute; top: 0; bottom: 64px; width: 22%;
+    z-index: 10; cursor: pointer; opacity: 0;
+  }
+  .zone.left { left: 0; }
+  .zone.right { right: 0; }
 
-      body {
-        margin: 0;
-        min-width: 320px;
-        background: var(--bg);
-        color: var(--text);
-        font-family:
-          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
-      }
+  /* ---------- toolbar ---------- */
+  #bar {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: 16px; z-index: 30;
+    display: flex; align-items: center; gap: 4px;
+    padding: 6px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--border);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 30px rgba(0,0,0,.45);
+  }
+  #bar button {
+    appearance: none; border: 0; background: transparent; color: var(--fg);
+    font: inherit; font-size: 14px; line-height: 1;
+    padding: 9px 12px; border-radius: 999px; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  #bar button:hover { background: rgba(255,255,255,.09); }
+  #bar button:disabled { opacity: .3; cursor: default; background: transparent; }
+  #bar button svg { width: 16px; height: 16px; fill: currentColor; }
+  #counter {
+    padding: 0 10px; min-width: 74px; text-align: center;
+    color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px;
+    cursor: pointer;
+  }
+  #counter strong { color: var(--fg); font-weight: 600; }
+  .sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
 
-      .shell {
-        display: grid;
-        grid-template-rows: auto minmax(0, 1fr);
-        min-height: 100%;
-      }
+  /* ---------- overlays ---------- */
+  .overlay {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(11, 13, 16, .97);
+    display: none; flex-direction: column;
+  }
+  .overlay.open { display: flex; }
+  .overlay header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 22px; border-bottom: 1px solid var(--border); flex: 0 0 auto;
+  }
+  .overlay header h2 { margin: 0; font-size: 15px; font-weight: 600; }
+  .overlay header button {
+    appearance: none; border: 1px solid var(--border); background: transparent;
+    color: var(--fg); border-radius: 8px; padding: 6px 12px; cursor: pointer; font: inherit; font-size: 13px;
+  }
+  .overlay header button:hover { background: rgba(255,255,255,.08); }
 
-      header {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 18px;
-        align-items: center;
-        padding: 18px clamp(16px, 4vw, 40px);
-        border-bottom: 1px solid var(--line);
-        background: rgba(255, 255, 255, 0.84);
-        backdrop-filter: blur(14px);
-      }
+  #gridBody { overflow-y: auto; padding: 18px; flex: 1 1 auto; }
+  #grid {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  }
+  .thumb { cursor: pointer; text-align: left; border: 0; background: transparent; padding: 0; color: inherit; font: inherit; }
+  .thumb img {
+    width: 100%; aspect-ratio: 16 / 9; object-fit: cover; display: block;
+    border-radius: 8px; border: 2px solid transparent; background: #15181d;
+  }
+  .thumb:hover img { border-color: rgba(255,255,255,.35); }
+  .thumb.current img { border-color: var(--accent); }
+  .thumb span {
+    display: block; margin-top: 7px; font-size: 12px; color: var(--muted);
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .thumb b { color: var(--fg); font-weight: 600; margin-right: 5px; }
 
-      h1 {
-        margin: 0;
-        font-size: clamp(1.25rem, 2.4vw, 2rem);
-        line-height: 1.1;
-        letter-spacing: 0;
-      }
+  #helpBody { padding: 22px; overflow-y: auto; }
+  #helpBody table { border-collapse: collapse; font-size: 14px; }
+  #helpBody td { padding: 6px 18px 6px 0; vertical-align: top; }
+  kbd {
+    display: inline-block; padding: 2px 7px; border-radius: 5px;
+    border: 1px solid var(--border); background: rgba(255,255,255,.06);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px;
+  }
+</style>
+</head>
+<body>
 
-      .meta {
-        margin: 6px 0 0;
-        color: var(--muted);
-        font-size: 0.95rem;
-      }
+<div id="progress"></div>
 
-      .actions {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: flex-end;
-        gap: 10px;
-      }
+<main id="stage">
+  <img id="slide" alt="">
+  <div class="zone left"  id="zoneLeft"  title="Previous"></div>
+  <div class="zone right" id="zoneRight" title="Next"></div>
+</main>
 
-      .button {
-        display: inline-flex;
-        min-height: 42px;
-        align-items: center;
-        justify-content: center;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        padding: 0 16px;
-        color: var(--text);
-        background: var(--panel);
-        font-size: 0.95rem;
-        font-weight: 650;
-        text-decoration: none;
-        white-space: nowrap;
-      }
+<nav id="bar" class="chrome">
+  <button id="btnFirst" title="First slide (Home)" aria-label="First slide">
+    <svg viewBox="0 0 16 16"><path d="M4 2h2v12H4zM13 2.6v10.8L6 8z"/></svg>
+  </button>
+  <button id="btnPrev" title="Previous (←)" aria-label="Previous slide">
+    <svg viewBox="0 0 16 16"><path d="M11 2.2v11.6L2.5 8z"/></svg>
+  </button>
+  <div id="counter" title="Jump to slide"><strong>1</strong> / 53</div>
+  <button id="btnNext" title="Next (→ or Space)" aria-label="Next slide">
+    <svg viewBox="0 0 16 16"><path d="M5 2.2v11.6L13.5 8z"/></svg>
+  </button>
+  <button id="btnLast" title="Last slide (End)" aria-label="Last slide">
+    <svg viewBox="0 0 16 16"><path d="M10 2h2v12h-2zM3 2.6v10.8L10 8z"/></svg>
+  </button>
+  <div class="sep"></div>
+  <button id="btnGrid" title="Overview (G)" aria-label="Slide overview">
+    <svg viewBox="0 0 16 16"><path d="M1 1h6v6H1zM9 1h6v6H9zM1 9h6v6H1zM9 9h6v6H9z"/></svg>
+  </button>
+  <button id="btnFull" title="Fullscreen (F)" aria-label="Toggle fullscreen">
+    <svg viewBox="0 0 16 16"><path d="M1 1h6v2H3v4H1zM15 1v6h-2V3H9V1zM1 9h2v4h4v2H1zM15 9v6H9v-2h4V9z"/></svg>
+  </button>
+  <button id="btnHelp" title="Keyboard shortcuts (?)" aria-label="Help">?</button>
+</nav>
 
-      .button.primary {
-        border-color: var(--accent);
-        background: var(--accent);
-        color: #ffffff;
-      }
+<section class="overlay" id="gridOverlay" aria-hidden="true">
+  <header>
+    <h2>All slides</h2>
+    <button data-close>Close &nbsp;<kbd>Esc</kbd></button>
+  </header>
+  <div id="gridBody"><div id="grid"></div></div>
+</section>
 
-      .button:hover {
-        border-color: var(--accent-strong);
-      }
+<section class="overlay" id="helpOverlay" aria-hidden="true">
+  <header>
+    <h2>Keyboard shortcuts</h2>
+    <button data-close>Close &nbsp;<kbd>Esc</kbd></button>
+  </header>
+  <div id="helpBody">
+    <table>
+      <tr><td><kbd>→</kbd> <kbd>Space</kbd> <kbd>PgDn</kbd> <kbd>J</kbd></td><td>Next slide</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>PgUp</kbd> <kbd>K</kbd></td><td>Previous slide</td></tr>
+      <tr><td><kbd>Home</kbd> / <kbd>End</kbd></td><td>First / last slide</td></tr>
+      <tr><td><kbd>1</kbd>–<kbd>9</kbd> then <kbd>Enter</kbd></td><td>Jump to slide number</td></tr>
+      <tr><td><kbd>G</kbd></td><td>Slide overview</td></tr>
+      <tr><td><kbd>F</kbd></td><td>Fullscreen</td></tr>
+      <tr><td><kbd>?</kbd></td><td>This help</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close overlay / exit fullscreen</td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:13px;margin-top:20px">
+      On touch devices: swipe left / right, or tap the left / right edge of the slide.
+    </p>
+  </div>
+</section>
 
-      main {
-        min-height: 0;
-        padding: clamp(12px, 2vw, 24px);
-      }
+<script>
+/* Slide manifest — regenerate with build.py after adding or removing PNGs. */
+const SLIDES = /*__SLIDES__*/[
+  {
+    "file": "1_Building-the-AI-first-Developer-Stack.png",
+    "title": "Building the AI first Developer Stack"
+  },
+  {
+    "file": "2_July-2025.png",
+    "title": "July 2025"
+  },
+  {
+    "file": "3_Who-Am-I.png",
+    "title": "Who Am I"
+  },
+  {
+    "file": "4_Raise-your-hand-if-AI-helps-you-write-code.png",
+    "title": "Raise your hand if AI helps you write code"
+  },
+  {
+    "file": "5_Keep-them-up-if-AI-refines-your-tickets-before-anyone-plans.png",
+    "title": "Keep them up if AI refines your tickets before anyone plans"
+  },
+  {
+    "file": "6_Keep-them-up-if-AI-writes-a-plan-you-approve-before-any-code-exists.png",
+    "title": "Keep them up if AI writes a plan you approve before any code exists"
+  },
+  {
+    "file": "7_Keep-them-up-if-agents-review-the-PR-before-a-human-does.png",
+    "title": "Keep them up if agents review the PR before a human does"
+  },
+  {
+    "file": "8_Keep-them-up-if-AI-writes-and-heals-your-end-to-end-tests.png",
+    "title": "Keep them up if AI writes and heals your end to end tests"
+  },
+  {
+    "file": "9_We-adopted-AI-at-exactly-one-stage.png",
+    "title": "We adopted AI at exactly one stage"
+  },
+  {
+    "file": "10_We-called-this-AI-assisted-development-in-2024.png",
+    "title": "We called this AI assisted development in 2024"
+  },
+  {
+    "file": "11_In-2026-the-reusable-intelligence-lives-in-files.png",
+    "title": "In 2026 the reusable intelligence lives in files"
+  },
+  {
+    "file": "12_Upstream.png",
+    "title": "Upstream"
+  },
+  {
+    "file": "13_The-Stack.png",
+    "title": "The Stack"
+  },
+  {
+    "file": "14_Context-the-file-the-agent-reads-first.png",
+    "title": "Context the file the agent reads first"
+  },
+  {
+    "file": "15_Best-practices-Ive-landed-on.png",
+    "title": "Best practices Ive landed on"
+  },
+  {
+    "file": "16_Stage-one-the-ticket.png",
+    "title": "Stage one the ticket"
+  },
+  {
+    "file": "17_The-agent-reads-the-ticket-against-your-codebase.png",
+    "title": "The agent reads the ticket against your codebase"
+  },
+  {
+    "file": "18_The-plan-is-markdown-Committed-next-to-the-code.png",
+    "title": "The plan is markdown Committed next to the code"
+  },
+  {
+    "file": "19_Iterate-on-the-plan-not-the-diff.png",
+    "title": "Iterate on the plan not the diff"
+  },
+  {
+    "file": "20_How-certain-are-you.png",
+    "title": "How certain are you"
+  },
+  {
+    "file": "21_Approve-the-plan-before-you-pay-for-the-diff.png",
+    "title": "Approve the plan before you pay for the diff"
+  },
+  {
+    "file": "22_Lets-do-it-live.png",
+    "title": "Lets do it live"
+  },
+  {
+    "file": "23_The-Assembly-Line.png",
+    "title": "The Assembly Line"
+  },
+  {
+    "file": "24_My-setup-three-agents-three-jobs.png",
+    "title": "My setup three agents three jobs"
+  },
+  {
+    "file": "25_My-Team.png",
+    "title": "My Team"
+  },
+  {
+    "file": "26_Ticket-in-Draft-PR-out.png",
+    "title": "Ticket in Draft PR out"
+  },
+  {
+    "file": "27_Remote-control.png",
+    "title": "Remote control"
+  },
+  {
+    "file": "28_Autonomy-without-boundaries-is-not-a-workflow-It-is-a-risk.png",
+    "title": "Autonomy without boundaries is not a workflow It is a risk"
+  },
+  {
+    "file": "29_The-most-popular-skill-in-the-community-is-three-sentences.png",
+    "title": "The most popular skill in the community is three sentences"
+  },
+  {
+    "file": "30_What-getting-grilled-looks-like.png",
+    "title": "What getting grilled looks like"
+  },
+  {
+    "file": "31_The-three-skill-categories-I-recommend-starting-with.png",
+    "title": "The three skill categories I recommend starting with"
+  },
+  {
+    "file": "32_We-watched-an-agent-refuse-to-code.png",
+    "title": "We watched an agent refuse to code"
+  },
+  {
+    "file": "33_Trust-the-Line.png",
+    "title": "Trust the Line"
+  },
+  {
+    "file": "34_Three-gates-before-a-human-spends-attention.png",
+    "title": "Three gates before a human spends attention"
+  },
+  {
+    "file": "35_Agents-fail-differently.png",
+    "title": "Agents fail differently"
+  },
+  {
+    "file": "36_What-I-do-with-bot-feedback.png",
+    "title": "What I do with bot feedback"
+  },
+  {
+    "file": "37_Tests-can-start-in-plain-English-now.png",
+    "title": "Tests can start in plain English now"
+  },
+  {
+    "file": "38_From-test-driven-to-spec-driven.png",
+    "title": "From test driven to spec driven"
+  },
+  {
+    "file": "39_Planner-Generator-Healer.png",
+    "title": "Planner Generator Healer"
+  },
+  {
+    "file": "40_A-healed-test-can-prove-less-than-it-did.png",
+    "title": "A healed test can prove less than it did"
+  },
+  {
+    "file": "41_Readable-by-your-PM-Traceable-to-the-story.png",
+    "title": "Readable by your PM Traceable to the story"
+  },
+  {
+    "file": "42_From-intent-to-test-plan-to-spec.png",
+    "title": "From intent to test plan to spec"
+  },
+  {
+    "file": "43_Prompt-engineering-optimizes-a-message-Loop-engineering-optimizes-the-pipeline.png",
+    "title": "Prompt engineering optimizes a message Loop engineering optimizes the pipeline"
+  },
+  {
+    "file": "44_It-didnt-all-work.png",
+    "title": "It didnt all work"
+  },
+  {
+    "file": "45_War-story-1-The-undocumented-deployment.png",
+    "title": "War story 1 The undocumented deployment"
+  },
+  {
+    "file": "46_War-story-2-The-queue-that-woke-up.png",
+    "title": "War story 2 The queue that woke up"
+  },
+  {
+    "file": "47_War-story-3-When-the-reviewer-was-wrong.png",
+    "title": "War story 3 When the reviewer was wrong"
+  },
+  {
+    "file": "48_One-file-per-week.png",
+    "title": "One file per week"
+  },
+  {
+    "file": "49_The-hottest-new-programming-language-is-English.png",
+    "title": "The hottest new programming language is English"
+  },
+  {
+    "file": "50_We-spent-twenty-years-learning-to-write-code.png",
+    "title": "We spent twenty years learning to write code"
+  },
+  {
+    "file": "51_avindrafernando.png",
+    "title": "avindrafernando"
+  },
+  {
+    "file": "52_Taprobane-Consulting.png",
+    "title": "Taprobane Consulting"
+  },
+  {
+    "file": "53_avindrafernando.png",
+    "title": "avindrafernando"
+  }
+];
 
-      .viewer {
-        width: 100%;
-        height: calc(100vh - 112px);
-        min-height: 520px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        overflow: hidden;
-        background: var(--panel);
-        box-shadow: var(--shadow);
-      }
+const DIR = 'slides/';
+const el = {
+  slide: document.getElementById('slide'),
+  counter: document.getElementById('counter'),
+  progress: document.getElementById('progress'),
+  grid: document.getElementById('grid'),
+  gridOverlay: document.getElementById('gridOverlay'),
+  helpOverlay: document.getElementById('helpOverlay'),
+  prev: document.getElementById('btnPrev'),
+  next: document.getElementById('btnNext'),
+  first: document.getElementById('btnFirst'),
+  last: document.getElementById('btnLast'),
+};
+const DECK_TITLE = document.title;
+let index = 0;
+let gridBuilt = false;
 
-      iframe,
-      object {
-        display: block;
-        width: 100%;
-        height: 100%;
-        border: 0;
-      }
+/* ---------- navigation ---------- */
+function clamp(i) { return Math.max(0, Math.min(SLIDES.length - 1, i)); }
 
-      .fallback {
-        display: grid;
-        min-height: 100%;
-        place-items: center;
-        padding: 28px;
-        text-align: center;
-      }
+function show(i, push) {
+  index = clamp(i);
+  const s = SLIDES[index];
+  el.slide.src = DIR + encodeURIComponent(s.file);
+  el.slide.alt = `Slide ${index + 1}: ${s.title}`;
+  el.counter.innerHTML = `<strong>${index + 1}</strong> / ${SLIDES.length}`;
+  el.progress.style.width = ((index + 1) / SLIDES.length * 100) + '%';
+  el.prev.disabled = el.first.disabled = index === 0;
+  el.next.disabled = el.last.disabled = index === SLIDES.length - 1;
+  document.title = `${index + 1}/${SLIDES.length} · ${DECK_TITLE}`;
+  if (push !== false) history.replaceState(null, '', '#' + (index + 1));
+  markCurrentThumb();
+  preload(index + 1); preload(index + 2); preload(index - 1);
+}
 
-      .fallback p {
-        max-width: 36rem;
-        margin: 0;
-        color: var(--muted);
-        line-height: 1.55;
-      }
+const preloaded = new Set();
+function preload(i) {
+  if (i < 0 || i >= SLIDES.length || preloaded.has(i)) return;
+  preloaded.add(i);
+  new Image().src = DIR + encodeURIComponent(SLIDES[i].file);
+}
 
-      @media (max-width: 760px) {
-        header {
-          grid-template-columns: 1fr;
-          gap: 14px;
-        }
+const next = () => show(index + 1);
+const prev = () => show(index - 1);
 
-        .actions {
-          justify-content: stretch;
-        }
+/* ---------- overlays ---------- */
+function buildGrid() {
+  if (gridBuilt) return;
+  gridBuilt = true;
+  el.grid.innerHTML = SLIDES.map((s, i) => `
+    <button class="thumb" data-i="${i}">
+      <img loading="lazy" src="${DIR + encodeURIComponent(s.file)}" alt="">
+      <span><b>${i + 1}</b>${escapeHtml(s.title)}</span>
+    </button>`).join('');
+  el.grid.querySelectorAll('.thumb').forEach(t =>
+    t.addEventListener('click', () => { show(+t.dataset.i); closeOverlays(); }));
+}
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function markCurrentThumb() {
+  if (!gridBuilt) return;
+  el.grid.querySelectorAll('.thumb').forEach((t, i) => t.classList.toggle('current', i === index));
+}
+function openGrid() {
+  buildGrid(); markCurrentThumb();
+  el.gridOverlay.classList.add('open');
+  const cur = el.grid.querySelector('.thumb.current');
+  if (cur) cur.scrollIntoView({ block: 'center' });
+}
+function closeOverlays() {
+  el.gridOverlay.classList.remove('open');
+  el.helpOverlay.classList.remove('open');
+}
+const anyOverlayOpen = () =>
+  el.gridOverlay.classList.contains('open') || el.helpOverlay.classList.contains('open');
 
-        .button {
-          flex: 1 1 140px;
-        }
+function toggleFullscreen() {
+  if (document.fullscreenElement) document.exitFullscreen();
+  else document.documentElement.requestFullscreen?.().catch(() => {});
+}
 
-        .viewer {
-          height: calc(100vh - 176px);
-          min-height: 420px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <div class="shell">
-      <header>
-        <div>
-          <h1>Building the AI-first Developer Stack</h1>
-          <p class="meta">PDF slides</p>
-        </div>
-        <nav class="actions" aria-label="PDF actions">
-          <a class="button primary" href="assets/building-the-ai-first-developer-stack.pdf">Open PDF</a>
-          <a class="button" href="assets/building-the-ai-first-developer-stack.pdf" download>Download</a>
-        </nav>
-      </header>
+/* ---------- wiring ---------- */
+el.next.onclick = next;
+el.prev.onclick = prev;
+el.first.onclick = () => show(0);
+el.last.onclick = () => show(SLIDES.length - 1);
+document.getElementById('zoneRight').onclick = next;
+document.getElementById('zoneLeft').onclick = prev;
+document.getElementById('btnGrid').onclick = () => anyOverlayOpen() ? closeOverlays() : openGrid();
+document.getElementById('btnFull').onclick = toggleFullscreen;
+document.getElementById('btnHelp').onclick = () => {
+  closeOverlays(); el.helpOverlay.classList.add('open');
+};
+el.counter.onclick = openGrid;
+document.querySelectorAll('[data-close]').forEach(b => b.onclick = closeOverlays);
 
-      <main>
-        <section class="viewer" aria-label="PDF viewer">
-          <object
-            data="assets/building-the-ai-first-developer-stack.pdf"
-            type="application/pdf"
-          >
-            <div class="fallback">
-              <p>
-                This browser cannot show the embedded PDF. Use the Open PDF or
-                Download action above.
-              </p>
-            </div>
-          </object>
-        </section>
-      </main>
-    </div>
-  </body>
+let typed = '';
+let typedTimer;
+document.addEventListener('keydown', e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+
+  if (k === 'Escape') {
+    if (anyOverlayOpen()) { closeOverlays(); e.preventDefault(); }
+    return;
+  }
+  if (/^[0-9]$/.test(k)) {
+    typed += k;
+    clearTimeout(typedTimer);
+    typedTimer = setTimeout(() => { typed = ''; }, 1200);
+    return;
+  }
+  if (k === 'Enter') {
+    if (typed) { show(parseInt(typed, 10) - 1); typed = ''; closeOverlays(); e.preventDefault(); }
+    return;
+  }
+  if (anyOverlayOpen() && !['g', 'G', '?'].includes(k)) return;
+
+  switch (k) {
+    case 'ArrowRight': case 'PageDown': case ' ': case 'j': case 'J': case 'l': case 'L':
+      next(); e.preventDefault(); break;
+    case 'ArrowLeft': case 'PageUp': case 'k': case 'K': case 'h': case 'H':
+      prev(); e.preventDefault(); break;
+    case 'Home': show(0); e.preventDefault(); break;
+    case 'End': show(SLIDES.length - 1); e.preventDefault(); break;
+    case 'g': case 'G': anyOverlayOpen() ? closeOverlays() : openGrid(); e.preventDefault(); break;
+    case 'f': case 'F': toggleFullscreen(); e.preventDefault(); break;
+    case '?': closeOverlays(); el.helpOverlay.classList.add('open'); e.preventDefault(); break;
+  }
+});
+
+/* touch: swipe */
+let touchX = null, touchY = null;
+document.addEventListener('touchstart', e => {
+  touchX = e.changedTouches[0].clientX;
+  touchY = e.changedTouches[0].clientY;
+}, { passive: true });
+document.addEventListener('touchend', e => {
+  if (touchX === null || anyOverlayOpen()) return;
+  const dx = e.changedTouches[0].clientX - touchX;
+  const dy = e.changedTouches[0].clientY - touchY;
+  if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy)) dx < 0 ? next() : prev();
+  touchX = touchY = null;
+}, { passive: true });
+
+/* auto-hide chrome while idle */
+let idleTimer;
+function poke() {
+  document.body.classList.remove('hide-ui');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (!anyOverlayOpen()) document.body.classList.add('hide-ui');
+  }, 2600);
+}
+['mousemove', 'keydown', 'touchstart', 'click'].forEach(ev =>
+  document.addEventListener(ev, poke, { passive: true }));
+poke();
+
+window.addEventListener('hashchange', () => {
+  const n = parseInt(location.hash.slice(1), 10);
+  if (n && n - 1 !== index) show(n - 1, false);
+});
+
+/* ---------- boot ---------- */
+const start = parseInt(location.hash.slice(1), 10);
+show(Number.isFinite(start) && start > 0 ? start - 1 : 0);
+</script>
+</body>
 </html>
