@@ -16,6 +16,10 @@ import sys
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SLIDE_DIR = os.path.join(ROOT, "slides")
 INDEX = os.path.join(ROOT, "index.html")
+# Optional per-slide extras, keyed by filename without the number prefix or
+# extension ("30_httpsfoo.png" -> "httpsfoo"), so entries survive renumbering.
+EMBEDS = os.path.join(ROOT, "embeds.json")
+EMBED_KEYS = {"title", "embed", "link"}
 MARKER = re.compile(r"(const SLIDES = /\*__SLIDES__\*/)[\s\S]*?;\n")
 
 
@@ -32,20 +36,39 @@ def main():
     if not files:
         sys.exit(f"No PNGs found in {SLIDE_DIR}")
 
-    slides = []
+    extras = {}
+    if os.path.exists(EMBEDS):
+        extras = json.load(open(EMBEDS, encoding="utf-8"))
+    for key, extra in extras.items():
+        unknown = set(extra) - EMBED_KEYS
+        if unknown:
+            sys.exit(f"embeds.json '{key}': unknown field(s) {sorted(unknown)}")
+        for field in ("embed", "link"):
+            if field in extra and not extra[field].startswith("https://"):
+                sys.exit(f"embeds.json '{key}': {field} must be an https:// URL")
+
+    slides, used = [], set()
     for i, f in enumerate(files, start=1):
-        title = re.sub(r"^\d+_", "", f)[:-4].replace("-", " ").strip()
+        slug = re.sub(r"^\d+_", "", f)[:-4]
+        title = slug.replace("-", " ").strip()
         # Some exports drop the title entirely (e.g. when it starts with a quote).
-        slides.append({"file": f, "title": title or f"Slide {i}"})
+        entry = {"file": f, "title": title or f"Slide {i}"}
+        if slug in extras:
+            used.add(slug)
+            entry.update(extras[slug])
+        slides.append(entry)
+
+    for key in sorted(set(extras) - used):
+        print(f"warning: embeds.json entry '{key}' matches no slide", file=sys.stderr)
 
     html = open(INDEX, encoding="utf-8").read()
-    payload = json.dumps(slides, indent=2, ensure_ascii=False)
+    payload = json.dumps(slides, indent=2, ensure_ascii=False).replace("</", "<\\/")
     html, n = MARKER.subn(lambda m: m.group(1) + payload + ";\n", html, count=1)
     if n != 1:
         sys.exit("Could not find the SLIDES marker in index.html")
 
     open(INDEX, "w", encoding="utf-8").write(html)
-    print(f"Wrote {len(slides)} slides into index.html")
+    print(f"Wrote {len(slides)} slides into index.html ({len(used)} with embeds.json extras)")
 
 
 if __name__ == "__main__":

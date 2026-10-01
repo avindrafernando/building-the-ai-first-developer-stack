@@ -55,6 +55,16 @@
   .zone.left { left: 0; }
   .zone.right { right: 0; }
 
+  /* ---------- embedded slides (video / live site) ---------- */
+  /* Keep the embed above the toolbar so it never covers the player controls. */
+  body.embed #stage { bottom: 72px; }
+  body.embed #slide, body.embed .zone { display: none; }
+  #embed {
+    flex: 0 0 auto; display: block; border: 0; background: #000;
+    aspect-ratio: 16 / 9; height: auto;
+    width: min(100vw, calc((100vh - 72px) * 16 / 9));
+  }
+
   /* ---------- toolbar ---------- */
   #bar {
     position: fixed; left: 50%; transform: translateX(-50%);
@@ -65,15 +75,16 @@
     backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     box-shadow: 0 8px 30px rgba(0,0,0,.45);
   }
-  #bar button {
-    appearance: none; border: 0; background: transparent; color: var(--fg);
+  #bar button, #bar a {
+    appearance: none; text-decoration: none; border: 0; background: transparent; color: var(--fg);
     font: inherit; font-size: 14px; line-height: 1;
     padding: 9px 12px; border-radius: 999px; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center;
   }
-  #bar button:hover { background: rgba(255,255,255,.09); }
+  #bar button:hover, #bar a:hover { background: rgba(255,255,255,.09); }
+  #bar [hidden] { display: none; }
   #bar button:disabled { opacity: .3; cursor: default; background: transparent; }
-  #bar button svg { width: 16px; height: 16px; fill: currentColor; }
+  #bar button svg, #bar a svg { width: 16px; height: 16px; fill: currentColor; }
   #counter {
     padding: 0 10px; min-width: 74px; text-align: center;
     color: var(--muted); font-variant-numeric: tabular-nums; font-size: 13px;
@@ -117,6 +128,14 @@
     display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
   }
   .thumb b { color: var(--fg); font-weight: 600; margin-right: 5px; }
+  .embed-thumb {
+    width: 100%; aspect-ratio: 16 / 9; border-radius: 8px; border: 2px solid transparent;
+    background: #15181d; color: var(--muted); font-size: 12.5px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  }
+  .embed-thumb i { font-style: normal; font-size: 26px; color: var(--fg); }
+  .thumb:hover .embed-thumb { border-color: rgba(255,255,255,.35); }
+  .thumb.current .embed-thumb { border-color: var(--accent); }
 
   #helpBody { padding: 22px; overflow-y: auto; }
   #helpBody table { border-collapse: collapse; font-size: 14px; }
@@ -153,6 +172,9 @@
     <svg viewBox="0 0 16 16"><path d="M10 2h2v12h-2zM3 2.6v10.8L10 8z"/></svg>
   </button>
   <div class="sep"></div>
+  <a id="btnOpen" target="_blank" rel="noopener noreferrer" aria-label="Open link in a new tab" hidden>
+    <svg viewBox="0 0 16 16"><path d="M9 1h6v6h-2V4.4L7.7 9.7 6.3 8.3 11.6 3H9zM2 3h5v2H4v7h7V9h2v5H2z"/></svg>
+  </a>
   <button id="btnGrid" title="Overview (G)" aria-label="Slide overview">
     <svg viewBox="0 0 16 16"><path d="M1 1h6v6H1zM9 1h6v6H9zM1 9h6v6H1zM9 9h6v6H9z"/></svg>
   </button>
@@ -187,6 +209,10 @@
       <tr><td><kbd>Esc</kbd></td><td>Close overlay / exit fullscreen</td></tr>
     </table>
     <p style="color:var(--muted);font-size:13px;margin-top:20px">
+      On a video or live-site slide, the embed takes the keyboard once you click into it.
+      Click outside it, or use the toolbar, to get the arrow keys back.
+    </p>
+    <p style="color:var(--muted);font-size:13px;margin-top:20px">
       On touch devices: swipe left / right, or tap the left / right edge of the slide.
     </p>
   </div>
@@ -212,20 +238,20 @@ const SLIDES = /*__SLIDES__*/[
     "title": "Raise your hand if AI helps you write code"
   },
   {
-    "file": "5_Keep-them-up-if-AI-refines-your-tickets-before-anyone-plans.png",
-    "title": "Keep them up if AI refines your tickets before anyone plans"
+    "file": "5_if-AI-refines-your-tickets-before-anyone-plans.png",
+    "title": "if AI refines your tickets before anyone plans"
   },
   {
-    "file": "6_Keep-them-up-if-AI-writes-a-plan-you-approve-before-any-code-exists.png",
-    "title": "Keep them up if AI writes a plan you approve before any code exists"
+    "file": "6_if-AI-writes-a-plan-you-approve-before-any-code-exists.png",
+    "title": "if AI writes a plan you approve before any code exists"
   },
   {
-    "file": "7_Keep-them-up-if-agents-review-the-PR-before-a-human-does.png",
-    "title": "Keep them up if agents review the PR before a human does"
+    "file": "7_if-agents-review-the-PR-before-a-human-does.png",
+    "title": "if agents review the PR before a human does"
   },
   {
-    "file": "8_Keep-them-up-if-AI-writes-and-heals-your-end-to-end-tests.png",
-    "title": "Keep them up if AI writes and heals your end to end tests"
+    "file": "8_if-AI-writes-and-heals-your-end-to-end-tests.png",
+    "title": "if AI writes and heals your end to end tests"
   },
   {
     "file": "9_We-adopted-AI-at-exactly-one-stage.png",
@@ -252,16 +278,16 @@ const SLIDES = /*__SLIDES__*/[
     "title": "Context the file the agent reads first"
   },
   {
-    "file": "15_Best-practices-Ive-landed-on.png",
-    "title": "Best practices Ive landed on"
+    "file": "15_What-Ive-learned-writing-these-files.png",
+    "title": "What Ive learned writing these files"
   },
   {
-    "file": "16_Stage-one-the-ticket.png",
-    "title": "Stage one the ticket"
+    "file": "16_Stage-one-the-story.png",
+    "title": "Stage one the story"
   },
   {
-    "file": "17_The-agent-reads-the-ticket-against-your-codebase.png",
-    "title": "The agent reads the ticket against your codebase"
+    "file": "17_The-agent-reads-the-story-against-your-codebase.png",
+    "title": "The agent reads the story against your codebase"
   },
   {
     "file": "18_The-plan-is-markdown-Committed-next-to-the-code.png",
@@ -288,8 +314,8 @@ const SLIDES = /*__SLIDES__*/[
     "title": "The Assembly Line"
   },
   {
-    "file": "24_My-setup-three-agents-three-jobs.png",
-    "title": "My setup three agents three jobs"
+    "file": "24_Four-roles-Each-one-is-a-file-with-a-tool-scope.png",
+    "title": "Four roles Each one is a file with a tool scope"
   },
   {
     "file": "25_My-Team.png",
@@ -308,20 +334,22 @@ const SLIDES = /*__SLIDES__*/[
     "title": "Autonomy without boundaries is not a workflow It is a risk"
   },
   {
-    "file": "29_The-most-popular-skill-in-the-community-is-three-sentences.png",
-    "title": "The most popular skill in the community is three sentences"
+    "file": "29_A-skill-you-fork-is-a-skill-you-own.png",
+    "title": "A skill you fork is a skill you own"
   },
   {
-    "file": "30_What-getting-grilled-looks-like.png",
-    "title": "What getting grilled looks like"
+    "file": "30_httpswwwyoutubecomembed47LmVzQrhCw.png",
+    "title": "Use the Grill Me agent skill to build what you want (video)",
+    "embed": "https://www.youtube-nocookie.com/embed/47LmVzQrhCw",
+    "link": "https://www.youtube.com/watch?v=47LmVzQrhCw"
   },
   {
     "file": "31_The-three-skill-categories-I-recommend-starting-with.png",
     "title": "The three skill categories I recommend starting with"
   },
   {
-    "file": "32_We-watched-an-agent-refuse-to-code.png",
-    "title": "We watched an agent refuse to code"
+    "file": "32_The-description-is-the-trigger.png",
+    "title": "The description is the trigger"
   },
   {
     "file": "33_Trust-the-Line.png",
@@ -344,12 +372,12 @@ const SLIDES = /*__SLIDES__*/[
     "title": "Tests can start in plain English now"
   },
   {
-    "file": "38_From-test-driven-to-spec-driven.png",
-    "title": "From test driven to spec driven"
+    "file": "38_TDD-the-test-drives-the-code.png",
+    "title": "TDD the test drives the code"
   },
   {
-    "file": "39_Planner-Generator-Healer.png",
-    "title": "Planner Generator Healer"
+    "file": "39_Planner-Generator-Healer-Shipped-by-Playwright-living-in-my-repo.png",
+    "title": "Planner Generator Healer Shipped by Playwright living in my repo"
   },
   {
     "file": "40_A-healed-test-can-prove-less-than-it-did.png",
@@ -400,18 +428,22 @@ const SLIDES = /*__SLIDES__*/[
     "title": "avindrafernando"
   },
   {
-    "file": "52_Taprobane-Consulting.png",
-    "title": "Taprobane Consulting"
+    "file": "52_httpstaprobaneconsultingtech.png",
+    "title": "Taprobane Consulting",
+    "embed": "https://taprobaneconsulting.tech",
+    "link": "https://taprobaneconsulting.tech"
   },
   {
-    "file": "53_avindrafernando.png",
-    "title": "avindrafernando"
+    "file": "53_Questions-Feedback.png",
+    "title": "Questions Feedback"
   }
 ];
 
 const DIR = 'slides/';
 const el = {
+  stage: document.getElementById('stage'),
   slide: document.getElementById('slide'),
+  open: document.getElementById('btnOpen'),
   counter: document.getElementById('counter'),
   progress: document.getElementById('progress'),
   grid: document.getElementById('grid'),
@@ -432,8 +464,14 @@ function clamp(i) { return Math.max(0, Math.min(SLIDES.length - 1, i)); }
 function show(i, push) {
   index = clamp(i);
   const s = SLIDES[index];
-  el.slide.src = DIR + encodeURIComponent(s.file);
+  setEmbed(s);
+  if (!s.embed) el.slide.src = DIR + encodeURIComponent(s.file);
   el.slide.alt = `Slide ${index + 1}: ${s.title}`;
+  el.open.hidden = !s.link;
+  if (s.link) {
+    el.open.href = s.link;
+    el.open.title = `Open ${hostOf(s.link)} in a new tab`;
+  }
   el.counter.innerHTML = `<strong>${index + 1}</strong> / ${SLIDES.length}`;
   el.progress.style.width = ((index + 1) / SLIDES.length * 100) + '%';
   el.prev.disabled = el.first.disabled = index === 0;
@@ -444,9 +482,32 @@ function show(i, push) {
   preload(index + 1); preload(index + 2); preload(index - 1);
 }
 
+/* Embedded slides (video / live site) render an iframe instead of their PNG.
+   A fresh iframe per visit stops playback on leave and keeps it out of history. */
+function setEmbed(s) {
+  const old = document.getElementById('embed');
+  if (old && old.dataset.src === s.embed) return;
+  if (old) old.remove();
+  document.body.classList.toggle('embed', !!s.embed);
+  if (!s.embed) return;
+  document.body.classList.remove('hide-ui');
+  const f = document.createElement('iframe');
+  f.id = 'embed';
+  f.dataset.src = s.embed;
+  f.src = s.embed;
+  f.title = s.title;
+  f.allow = 'encrypted-media; picture-in-picture; fullscreen';
+  f.allowFullscreen = true;
+  f.referrerPolicy = 'strict-origin-when-cross-origin';
+  el.stage.appendChild(f);
+}
+function hostOf(url) {
+  try { return new URL(url).hostname.replace(/^www\./, ''); } catch { return url; }
+}
+
 const preloaded = new Set();
 function preload(i) {
-  if (i < 0 || i >= SLIDES.length || preloaded.has(i)) return;
+  if (i < 0 || i >= SLIDES.length || preloaded.has(i) || SLIDES[i].embed) return;
   preloaded.add(i);
   new Image().src = DIR + encodeURIComponent(SLIDES[i].file);
 }
@@ -460,7 +521,9 @@ function buildGrid() {
   gridBuilt = true;
   el.grid.innerHTML = SLIDES.map((s, i) => `
     <button class="thumb" data-i="${i}">
-      <img loading="lazy" src="${DIR + encodeURIComponent(s.file)}" alt="">
+      ${s.embed
+        ? `<div class="embed-thumb"><i>${/youtube|vimeo/.test(hostOf(s.embed)) ? '▶' : '🌐'}</i>${escapeHtml(hostOf(s.link || s.embed))}</div>`
+        : `<img loading="lazy" src="${DIR + encodeURIComponent(s.file)}" alt="">`}
       <span><b>${i + 1}</b>${escapeHtml(s.title)}</span>
     </button>`).join('');
   el.grid.querySelectorAll('.thumb').forEach(t =>
@@ -561,7 +624,7 @@ function poke() {
   document.body.classList.remove('hide-ui');
   clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
-    if (!anyOverlayOpen()) document.body.classList.add('hide-ui');
+    if (!anyOverlayOpen() && !document.body.classList.contains('embed')) document.body.classList.add('hide-ui');
   }, 2600);
 }
 ['mousemove', 'keydown', 'touchstart', 'click'].forEach(ev =>

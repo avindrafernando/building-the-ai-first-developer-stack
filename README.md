@@ -25,6 +25,7 @@ slide is deep-linkable — `#12` opens slide 12.
 ```
 index.html   the whole viewer: markup, styles, script, slide manifest
 build.py     regenerates the manifest inside index.html from slides/
+embeds.json  optional: live video / website embeds and links for specific slides
 slides/      one PNG per slide, named <number>_<Title-with-dashes>.png
 ```
 
@@ -55,3 +56,29 @@ python3 build.py
 
 Gaps in the numbering are fine; slides are sorted by the numeric prefix, not by
 being consecutive.
+
+## Video and live-site slides
+
+Slide exports can't capture embedded content, so a slide that held a video or a
+website comes out as an empty frame with the URL as its filename. `embeds.json`
+puts the real thing back:
+
+```json
+{
+  "httpswwwyoutubecomembed47LmVzQrhCw": {
+    "title": "Use the Grill Me agent skill to build what you want (video)",
+    "embed": "https://www.youtube-nocookie.com/embed/47LmVzQrhCw",
+    "link": "https://www.youtube.com/watch?v=47LmVzQrhCw"
+  }
+}
+```
+
+- The key is the slide's filename without the number prefix or `.png`, so the
+  entry still matches after slides are renumbered or re-exported.
+- `embed` shows that URL in an iframe in place of the PNG. Use
+  `youtube-nocookie.com/embed/<id>` for YouTube.
+- `link` adds an open-in-new-tab button to the toolbar on that slide.
+- `title` overrides the label in the overview.
+
+Run `python3 build.py` after editing it. It warns about entries that no longer
+match a slide.
